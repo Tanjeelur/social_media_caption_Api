@@ -5,3 +5,4 @@ app = FastAPI(title="Caption Generator")
 
 # Register API routes
 app.include_router(api_router, prefix="/api/v1")
+
