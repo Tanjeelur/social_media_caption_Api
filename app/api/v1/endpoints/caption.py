@@ -2,11 +2,13 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from app.models.captions import CaptionInput, EditRequest # Assuming this path is correct
-from app.services.captions_service import build_prompt_for_platform,build_edit_prompt, call_gemini_api # Changed import
-import re
-import httpx
+from app.services.captions_service import build_prompt_for_platform, build_edit_prompt, call_gemini_api
 
 router = APIRouter()
+
+ # ...existing code...
+import re
+import httpx
 
 @router.post(
     "/generate",
@@ -16,7 +18,9 @@ router = APIRouter()
 async def generate_caption(input_data: CaptionInput):
     """
     Generates social media captions and hashtags for specified platforms
-    using the Gemini API.
+    using the Gemini API.Make the caption more engaging and relevant
+    to the content provided in the input data.You can also make it fun in some cases.
+    The response will include a caption and a list of hashtags for each platform.
     """
     results = {}
 

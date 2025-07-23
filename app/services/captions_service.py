@@ -36,10 +36,10 @@ async def call_gemini_api(prompt: str) -> dict:
             "responseSchema": {
                 "type": "OBJECT",
                 "properties": {
-                    "caption": { "type": "STRING" },
+                    "caption": {"type": "STRING"},
                     "hashtags": {
                         "type": "ARRAY",
-                        "items": { "type": "STRING" }
+                        "items": {"type": "STRING"}
                     }
                 },
                 "required": ["caption", "hashtags"]
@@ -57,18 +57,14 @@ async def call_gemini_api(prompt: str) -> dict:
                 headers=headers,
                 json=payload
             )
-            response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
-
             llm_response_data = response.json()
 
-            # Check if candidates and content parts exist
-            if (llm_response_data.get("candidates") and
-                llm_response_data["candidates"][0].get("content") and
+            if (
+                llm_response_data.get("candidates") and
                 llm_response_data["candidates"][0]["content"].get("parts") and
-                llm_response_data["candidates"][0]["content"]["parts"][0].get("text")):
-
+                llm_response_data["candidates"][0]["content"]["parts"][0].get("text")
+            ):
                 content_string = llm_response_data["candidates"][0]["content"]["parts"][0]["text"]
-
                 try:
                     # The response is already expected to be JSON due to responseSchema
                     parsed_content = json.loads(content_string)

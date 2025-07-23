@@ -24,6 +24,12 @@ A FastAPI-based service for generating and editing social media captions and has
     pip install -r requirements.txt
     ```
 
+3. Create a `.env` file in the project root and add your Gemini API key:
+    ```env
+    GEMINI_API_KEY=your_gemini_api_key_here
+    ```
+
+
 ### Running the API
 
 Start the FastAPI server with Uvicorn:
