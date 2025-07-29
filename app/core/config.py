@@ -24,3 +24,4 @@ load_dotenv()  # Loads .env file
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GENINI_MODEL")
+OPENAI_API_KEY= os.getenv("OPENAI_API_KEY")

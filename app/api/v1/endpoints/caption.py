@@ -2,7 +2,8 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from app.models.captions import CaptionInput, EditRequest # Assuming this path is correct
-from app.services.captions_service import build_prompt_for_platform,build_edit_prompt, call_gemini_api # Changed import
+# from app.services.captions_service import build_prompt_for_platform,build_edit_prompt, call_gemini_api # Changed import
+from app.services.captions_service import build_prompt_for_platform,build_edit_prompt, call_openai_api # Updated import to include openai_call_api
 import re
 import httpx
 
@@ -28,7 +29,7 @@ async def generate_caption(input_data: CaptionInput):
             # Call the Gemini API to get the generated caption and hashtags
             # The call_gemini_api function is expected to return a dictionary
             # with "caption" and "hashtags" keys due to responseSchema.
-            llm_output = await call_gemini_api(prompt)
+            llm_output = await call_openai_api(prompt)
 
             # Validate the structure of the LLM's output
             if not isinstance(llm_output, dict) or "caption" not in llm_output or "hashtags" not in llm_output:
@@ -123,7 +124,7 @@ async def edit_caption(edit_data: EditRequest):
     
     try:
         prompt = build_edit_prompt(edit_data)
-        llm_output = await call_gemini_api(prompt)
+        llm_output = await call_openai_api(prompt)
 
         if not isinstance(llm_output, dict) or "caption" not in llm_output or "hashtags" not in llm_output:
             raise ValueError("LLM returned an unexpected JSON structure. Expected 'caption' and 'hashtags' keys.")

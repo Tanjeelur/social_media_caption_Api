@@ -1,104 +1,161 @@
-# Gemini
+# # Gemini
+# import os
+# import httpx
+# import json
+# from typing import Optional, List, Dict, Any
+# from pydantic import BaseModel
+# from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
+# from app.models.captions import CaptionInput,EditRequest
+
+# GEMINI_API_KEY =GEMINI_API_KEY
+# #print(GEMINI_API_KEY)
+
+# # Define the Gemini model to use
+# GEMINI_MODEL = "gemini-2.0-flash" # Or another appropriate Gemini model
+
+# async def call_gemini_api(prompt: str) -> dict:
+#     """
+#     Calls the Gemini API to generate content based on the provided prompt.
+#     Expects and enforces JSON output from the LLM.
+#     """
+#     # Headers for Gemini API - Content-Type is important for structured responses
+#     headers = {
+#         "Content-Type": "application/json"
+#     }
+
+#     # The payload for the Gemini API call
+#     payload = {
+#         "contents": [
+#             {
+#                 "role": "user",
+#                 "parts": [{"text": prompt}]
+#             }
+#         ],
+#         "generationConfig": {
+#             "responseMimeType": "application/json",
+#             "responseSchema": {
+#                 "type": "OBJECT",
+#                 "properties": {
+#                     "caption": { "type": "STRING" },
+#                     "hashtags": {
+#                         "type": "ARRAY",
+#                         "items": { "type": "STRING" }
+#                     }
+#                 },
+#                 "required": ["caption", "hashtags"]
+#             }
+#         }
+#     }
+
+#     # Construct the API URL
+#     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+
+#     async with httpx.AsyncClient() as client:
+#         try:
+#             response = await client.post(
+#                 api_url,
+#                 headers=headers,
+#                 json=payload
+#             )
+#             response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
+
+#             llm_response_data = response.json()
+
+#             # Check if candidates and content parts exist
+#             if (llm_response_data.get("candidates") and
+#                 llm_response_data["candidates"][0].get("content") and
+#                 llm_response_data["candidates"][0]["content"].get("parts") and
+#                 llm_response_data["candidates"][0]["content"]["parts"][0].get("text")):
+
+#                 content_string = llm_response_data["candidates"][0]["content"]["parts"][0]["text"]
+
+#                 try:
+#                     # The response is already expected to be JSON due to responseSchema
+#                     parsed_content = json.loads(content_string)
+#                     return parsed_content
+#                 except json.JSONDecodeError as e:
+#                     print(f"Error decoding JSON from LLM: {e}")
+#                     print(f"Raw LLM content: {content_string}")
+#                     raise ValueError("LLM did not return valid JSON output as per schema.") from e
+#             else:
+#                 print(f"Unexpected LLM response structure: {llm_response_data}")
+#                 raise ValueError("LLM response missing expected content.")
+
+#         except httpx.HTTPStatusError as e:
+#             # Handle HTTP errors from the API
+#             error_message = f"Gemini API error: {e.response.status_code} - {e.response.text}"
+#             print(error_message)
+#             raise RuntimeError(error_message) from e
+#         except httpx.RequestError as e:
+#             # Handle network errors (e.g., connection refused, DNS error)
+#             error_message = f"Network error during Gemini API call: {e}"
+#             print(error_message)
+#             raise RuntimeError(error_message) from e
+#         except ValueError as ve:
+#             # Re-raise ValueError from JSON decoding or unexpected response structure
+#             raise ve
+#         except Exception as e:
+#             # Catch any other unexpected errors
+#             error_message = f"An unexpected error occurred during Gemini API call: {e}"
+#             print(error_message)
+#             raise RuntimeError(error_message) from e
+
+
+
+
+# openai_integration.py
 import os
-import httpx
+import openai
 import json
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
-from app.core.config import GEMINI_API_KEY, GEMINI_MODEL
+from typing import Dict
+from app.core.config import OPENAI_API_KEY  # You should add this to your config
 from app.models.captions import CaptionInput,EditRequest
+from openai import AsyncOpenAI
+from openai._exceptions import AuthenticationError, RateLimitError, APIConnectionError, APIError
 
-GEMINI_API_KEY =GEMINI_API_KEY
-#print(GEMINI_API_KEY)
 
-# Define the Gemini model to use
-GEMINI_MODEL = "gemini-2.0-flash" # Or another appropriate Gemini model
 
-async def call_gemini_api(prompt: str) -> dict:
-    """
-    Calls the Gemini API to generate content based on the provided prompt.
-    Expects and enforces JSON output from the LLM.
-    """
-    # Headers for Gemini API - Content-Type is important for structured responses
+import httpx
+
+
+
+
+async def call_openai_api(prompt: str):
     headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json"
     }
 
-    # The payload for the Gemini API call
     payload = {
-        "contents": [
+        "model": "gpt-4",
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are a caption generator. Respond only in this JSON format:\n"
+                    "{ \"caption\": \"your caption here\", \"hashtags\": [\"#tag1\", \"#tag2\"] }"
+                )
+            },
             {
                 "role": "user",
-                "parts": [{"text": prompt}]
+                "content": prompt
             }
         ],
-        "generationConfig": {
-            "responseMimeType": "application/json",
-            "responseSchema": {
-                "type": "OBJECT",
-                "properties": {
-                    "caption": { "type": "STRING" },
-                    "hashtags": {
-                        "type": "ARRAY",
-                        "items": { "type": "STRING" }
-                    }
-                },
-                "required": ["caption", "hashtags"]
-            }
-        }
+        "temperature": 0.7
     }
 
-    # Construct the API URL
-    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers=headers,
+            json=payload
+        )
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                api_url,
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
+    response.raise_for_status()
+    content = response.json()["choices"][0]["message"]["content"]
 
-            llm_response_data = response.json()
+    return json.loads(content)
 
-            # Check if candidates and content parts exist
-            if (llm_response_data.get("candidates") and
-                llm_response_data["candidates"][0].get("content") and
-                llm_response_data["candidates"][0]["content"].get("parts") and
-                llm_response_data["candidates"][0]["content"]["parts"][0].get("text")):
-
-                content_string = llm_response_data["candidates"][0]["content"]["parts"][0]["text"]
-
-                try:
-                    # The response is already expected to be JSON due to responseSchema
-                    parsed_content = json.loads(content_string)
-                    return parsed_content
-                except json.JSONDecodeError as e:
-                    print(f"Error decoding JSON from LLM: {e}")
-                    print(f"Raw LLM content: {content_string}")
-                    raise ValueError("LLM did not return valid JSON output as per schema.") from e
-            else:
-                print(f"Unexpected LLM response structure: {llm_response_data}")
-                raise ValueError("LLM response missing expected content.")
-
-        except httpx.HTTPStatusError as e:
-            # Handle HTTP errors from the API
-            error_message = f"Gemini API error: {e.response.status_code} - {e.response.text}"
-            print(error_message)
-            raise RuntimeError(error_message) from e
-        except httpx.RequestError as e:
-            # Handle network errors (e.g., connection refused, DNS error)
-            error_message = f"Network error during Gemini API call: {e}"
-            print(error_message)
-            raise RuntimeError(error_message) from e
-        except ValueError as ve:
-            # Re-raise ValueError from JSON decoding or unexpected response structure
-            raise ve
-        except Exception as e:
-            # Catch any other unexpected errors
-            error_message = f"An unexpected error occurred during Gemini API call: {e}"
-            print(error_message)
-            raise RuntimeError(error_message) from e
 
 
 def build_prompt_for_platform(data: CaptionInput, platform: str) -> str:
