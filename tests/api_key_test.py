@@ -1,9 +1,7 @@
 import openai
 import os
 import dotenv
-
-OPWENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = "OPENAI_API_KEY"
+OPEN_API_KEY= os.getenv("OPENAI_API_KEY")
 
 try:
     models = openai.models.list()
