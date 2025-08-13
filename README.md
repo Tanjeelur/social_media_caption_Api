@@ -1,13 +1,14 @@
-# social_media_caption_Api
+# Social Media Caption API
 
 ## Overview
 
-A FastAPI-based service for generating and editing social media captions and hashtags using the Gemini API.
+A FastAPI-based service for generating and editing social media captions using OpenAI API.
 
 ## Features
 
-- Generate platform-specific captions and hashtags (`/api/v1/generate`)
-- Edit existing captions (`/api/v1/edit`)
+- Generate platform-specific captions and hashtags
+- Edit existing captions with various styles
+- Single unified endpoint for both operations
 
 ## Getting Started
 
@@ -24,12 +25,10 @@ A FastAPI-based service for generating and editing social media captions and has
     pip install -r requirements.txt
     ```
 
-3. Create a `.env` file in the project root and add your Gemini API key:
+3. Create a `.env` file in the project root and add your OpenAI API key:
     ```env
-    GEMINI_API_KEY=your_gemini_api_key_here
+    OPENAI_API_KEY=your_openai_api_key_here
     ```
-
-
 
 ### Running the API
 
@@ -44,46 +43,60 @@ The API will be available at:
 
 ### API Endpoints
 
-#### Generate Captions
+#### Unified Caption Endpoint
 
-- **POST** `/api/v1/generate`
-- Request body:  
-  ```json
-  {
-    "content": "Your post content here",
-    "platforms": ["instagram", "twitter"]
-  }
-  ```
-- Response:  
-  ```json
-  {
-    "instagram": {
-      "caption": "...",
-      "hashtags": ["#tag1", "#tag2"]
-    },
-    "twitter": {
-      "caption": "...",
-      "hashtags": ["#tag1", "#tag2"]
-    }
-  }
-  ```
+- **POST** `/api/v1/caption/caption`
 
-#### Edit Caption
+**Parameters:**
+- `platforms` (required): List of platforms (e.g., ["facebook", "instagram", "linkedin"])
+- `post_type` (optional): Type of post (e.g., "Story", "Post")
+- `post_topic` (optional): Topic of the post (e.g., "Food", "Travel")
+- `caption` (optional): Existing caption to edit
+- `edit_type` (optional): Type of edit (e.g., "rephrase", "make more casual", "shorten")
+- `image` (optional): Image file
 
-- **POST** `/api/v1/edit`
-- Request body:  
-  ```json
-  {
-    "caption": "Original caption",
-    "instructions": "Make it more engaging"
+**Logic:**
+- If `edit_type` is empty → generates a new caption
+- If `edit_type` has a value → edits the existing caption
+
+**Example Request (Generate):**
+```json
+{
+  "platforms": ["instagram", "facebook"],
+  "post_type": "Story",
+  "post_topic": "Food"
+}
+```
+
+**Example Request (Edit):**
+```json
+{
+  "platforms": ["instagram"],
+  "caption": "Original caption here",
+  "edit_type": "make more casual"
+}
+```
+
+**Response (Generate):**
+```json
+{
+  "instagram": {
+    "caption": "Generated caption...",
+    "hashtags": ["#tag1", "#tag2"]
+  },
+  "facebook": {
+    "caption": "Generated caption...",
+    "hashtags": ["#tag1", "#tag2"]
   }
-  ```
-- Response:  
-  ```json
-  {
-    "caption": "Edited caption"
-  }
-  ```
+}
+```
+
+**Response (Edit):**
+```json
+{
+  "caption": "Edited caption..."
+}
+```
 
 ## Project Structure
 
@@ -106,3 +119,5 @@ social_media_caption_Api/
 ```
 
 ## License
+
+MIT License

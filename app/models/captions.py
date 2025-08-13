@@ -19,3 +19,4 @@ class EditRequest(BaseModel):
 class GeneratedCaptionOutput(BaseModel):
     caption: str
     hashtags: List[str]
+
